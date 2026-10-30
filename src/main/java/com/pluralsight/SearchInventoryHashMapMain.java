@@ -125,7 +125,7 @@ public class SearchInventoryHashMapMain {
         }
     }
 
-    //TODO: searchPrice method - search the inventory at or under a price
+    //TODO: searchPrice method - search the inventory for a price range.
     public static void searchPrice(HashMap<String, Product> hardwareInventory, double minProductPrice, double maxProductPrice) {
         boolean found = false;
         for (Product product : hardwareInventory.values()) {
