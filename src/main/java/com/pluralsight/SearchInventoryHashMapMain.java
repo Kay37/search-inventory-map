@@ -4,11 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
 public class SearchInventoryHashMapMain {
 
@@ -25,7 +21,7 @@ public class SearchInventoryHashMapMain {
         //*I completed this within the getInventory method
 
         //*Using getInventory method to load hardwareInventory
-        ArrayList<Product> hardwareInventory = getInventory(fileName);
+        HashMap<String, Product> inventory = loadInventory(fileName);
 
         //*Creating a variable to keep the menu looping
         boolean menuRunning = true;
@@ -38,22 +34,22 @@ public class SearchInventoryHashMapMain {
             int userCommand = displayMainMenu(userInput);
             switch (userCommand) {
                 case 1:
-                    listInventory(hardwareInventory);
+                    listInventory(inventory);
                     break;
                 case 2:
                     System.out.println("Enter product name: ");
                     String nameSearch = userInput.nextLine();
-                    searchName(hardwareInventory, nameSearch);
+                    searchName(inventory, nameSearch);
                     break;
                 case 3:
                     System.out.println("Enter product description: ");
                     String descriptionSearch = userInput.nextLine();
-                    searchDescription(hardwareInventory, descriptionSearch);
+                    searchDescription(inventory, descriptionSearch);
                     break;
                 case 4:
                     System.out.println("Minimum quantity in stock to search for: ");
                     int quantitySearch = userInput.nextInt();
-                    searchMinQuantity(hardwareInventory, quantitySearch);
+                    searchMinQuantity(inventory, quantitySearch);
                     break;
                 case 5:
                     System.out.println("Enter product minimum price: ");
@@ -63,12 +59,12 @@ public class SearchInventoryHashMapMain {
                     if (minProductPrice > maxProductPrice) {
                         System.out.println("Minimum price is greater than maximum price. Try again");
                     } else {
-                        searchPrice(hardwareInventory, minProductPrice, maxProductPrice);
+                        searchPrice(inventory, minProductPrice, maxProductPrice);
                     }
 
                     break;
                 case 6:
-                    addProduct(userInput, hardwareInventory, fileName);
+                    addProduct(userInput, inventory, fileName);
                     break;
                 case 7:
                     menuRunning = false;
@@ -81,32 +77,30 @@ public class SearchInventoryHashMapMain {
     }
 
     //TODO: listInventory method - list the inventory, alphabetically sorted.
-    public static void listInventory(ArrayList<Product> hardwareInventory) {
-        Collections.sort(hardwareInventory, Comparator.comparing(Product::getProductName));
-        for (Product product : hardwareInventory) {
+    public static void listInventory(HashMap<String, Product> hardwareInventory) {
+        ArrayList<Product> sortedInventory = new ArrayList<>(hardwareInventory.values());
+        Collections.sort(sortedInventory, Comparator.comparing(Product::getProductName));
+        for (Product product : sortedInventory) {
             System.out.printf("%n%s - $%.2f%n", product.getProductName(), product.getProductPrice());
         }
 
     }
 
     //TODO: searchName method - search the inventory for a name
-    public static void searchName(ArrayList<Product> hardwareInventory, String productName) {
-        boolean found = false;
-        for (Product product : hardwareInventory) {
-            if (product.getProductName().equalsIgnoreCase(productName)) {
-                found = true;
-                System.out.printf("%n%s - $%.2f%n", product.getProductName(), product.getProductPrice());
-            }
-        }
-        if (!found) {
-            System.out.println("\nNo product with that name found.");
+    public static void searchName(HashMap<String, Product> hardwareInventory, String productName) {
+        Product match = hardwareInventory.get(productName.toLowerCase());
+        if (match == null) {
+            System.out.println("Product " + productName + " does not exist. Try again");
+        } else {
+            System.out.println("Product found for search: " + "'" + productName + "'");
+            System.out.println(match.getProductName() + " - $" + match.getProductPrice());
         }
     }
 
     //TODO: searchDescription method - search the inventory for a description
-    public static void searchDescription(ArrayList<Product> hardwareInventory, String productDescription) {
+    public static void searchDescription(HashMap<String, Product> hardwareInventory, String productDescription) {
         boolean found = false;
-        for (Product product : hardwareInventory) {
+        for (Product product : hardwareInventory.values()) {
             if (product.getProductDescription().contains(productDescription)) {
                 found = true;
                 System.out.printf("%n%s - $%.2f%n", product.getProductName(), product.getProductPrice());
@@ -118,9 +112,9 @@ public class SearchInventoryHashMapMain {
     }
 
     //TODO: searchQuantity method - search the inventory for products with at least this quantity
-    public static void searchMinQuantity(ArrayList<Product> hardwareInventory, int minQuantity) {
+    public static void searchMinQuantity(HashMap<String, Product> hardwareInventory, int minQuantity) {
         boolean found = false;
-        for (Product product : hardwareInventory) {
+        for (Product product : hardwareInventory.values()) {
             if (product.getProductQuantity() >= minQuantity) {
                 found = true;
                 System.out.printf("%n%s - $%.2f%n", product.getProductName(), product.getProductPrice());
@@ -132,9 +126,9 @@ public class SearchInventoryHashMapMain {
     }
 
     //TODO: searchPrice method - search the inventory at or under a price
-    public static void searchPrice(ArrayList<Product> hardwareInventory, double minProductPrice, double maxProductPrice) {
+    public static void searchPrice(HashMap<String, Product> hardwareInventory, double minProductPrice, double maxProductPrice) {
         boolean found = false;
-        for (Product product : hardwareInventory) {
+        for (Product product : hardwareInventory.values()) {
             if (product.getProductPrice() <= maxProductPrice && product.getProductPrice() >= minProductPrice) {
                 found = true;
                 System.out.printf("%n%s - $%.2f%n", product.getProductName(), product.getProductPrice());
@@ -146,7 +140,7 @@ public class SearchInventoryHashMapMain {
     }
 
     //TODO: addProduct method - add product to the inventory
-    public static void addProduct(Scanner userInput, ArrayList<Product> hardwareInventory, String fileName) {
+    public static void addProduct(Scanner userInput, HashMap<String, Product> hardwareInventory, String fileName) {
         System.out.println("Enter product name: ");
         String productName = userInput.nextLine();
         System.out.println("Enter product description: ");
@@ -158,14 +152,20 @@ public class SearchInventoryHashMapMain {
         double productPrice = userInput.nextDouble();
         userInput.nextLine();
 
-        hardwareInventory.add(new Product(productName, productDescription, productQuantity, productPrice));
-        try {
-            BufferedWriter eWriter = new BufferedWriter(new FileWriter(fileName, true));
-            eWriter.write(productName + "|" +  productDescription + "|" + productQuantity + "|" + productPrice + "\n");
-            eWriter.close();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            System.out.println("There was an error while writing to the file.\n");
+        String productKey = productName.toLowerCase();
+
+        if (hardwareInventory.containsKey(productKey)) {
+            System.out.println("There is already a product with the name " + productKey + ".\n");
+        } else {
+            hardwareInventory.put(productKey, new Product(productName, productDescription, productQuantity, productPrice));
+            try {
+                BufferedWriter eWriter = new BufferedWriter(new FileWriter(fileName, true));
+                eWriter.write(productName + "|" + productDescription + "|" + productQuantity + "|" + productPrice + "\n");
+                eWriter.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                System.out.println("There was an error while writing to the file.\n");
+            }
         }
 
 
@@ -192,10 +192,10 @@ public class SearchInventoryHashMapMain {
     }
 
     //TODO: getInventory() method - retrieving our inventory
-    public static ArrayList<Product> getInventory(String fileName) {
+    public static HashMap<String, Product> loadInventory(String fileName) {
 
         //! Using an array list to store our hardware inventory
-        ArrayList<Product> hardwareInventory = new ArrayList<Product>();
+        HashMap<String, Product> inventory = new HashMap<>();
 //!
 //!       //!Creating some hardware/tools
 //!        //!Exercise says at least 5 initial products
@@ -230,7 +230,7 @@ public class SearchInventoryHashMapMain {
                 int productQuantity = Integer.parseInt(inventoryFileArray[2]);
                 double productPrice = Double.parseDouble(inventoryFileArray[3]);
                 Product product = new Product(productName, productDescription, productQuantity, productPrice);
-                hardwareInventory.add(product);
+                inventory.put(product.getProductName().toLowerCase(), product);
             }
             eReader.close();
 
@@ -238,6 +238,6 @@ public class SearchInventoryHashMapMain {
             System.out.println(e.getMessage());
             System.out.println("Something went wrong. Try again");
         }
-        return hardwareInventory;
+        return inventory;
     }
 }
